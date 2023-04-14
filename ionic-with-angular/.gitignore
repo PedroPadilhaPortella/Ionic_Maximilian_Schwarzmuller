@@ -24,6 +24,7 @@ log.txt
 /plugins
 
 # Compiled output
+/android
 /dist
 /tmp
 /out-tsc

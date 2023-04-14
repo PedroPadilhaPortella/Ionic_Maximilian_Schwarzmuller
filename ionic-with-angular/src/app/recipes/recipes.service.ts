@@ -17,7 +17,7 @@ export class RecipesService {
   }
   
   deleteRecipe(recipeId: string) {
-    return this.recipes.filter(recipe => recipe.id !== recipeId);
+    this.recipes = this.recipes.filter(recipe => recipe.id !== recipeId);
   }
 
  private recipes: Recipe[] = [
