@@ -10,42 +10,54 @@ import { OfferBookingsPage } from './offers/offer-bookings/offer-bookings.page';
 
 export const routes: Routes = [
   {
-    path: '',
+    path: 'tabs',
     component: PlacesPage,
-  },
-  {
-    path: 'discover',
     children: [
       {
-        path: '',
-        component: DiscoverPage,
+        path: 'discover',
+        children: [
+          {
+            path: '',
+            component: DiscoverPage,
+          },
+          {
+            path: ':placeId',
+            component: PlaceDetailPage,
+          }
+        ]
       },
       {
-        path: ':placeId',
-        component: PlaceDetailPage,
+        path: 'offers',
+        children: [
+          {
+            path: '',
+            component: OffersPage,
+          },
+          {
+            path: 'new',
+            component: NewOfferPage,
+          },
+          {
+            path: 'edit/:placeId',
+            component: EditOfferPage,
+          },
+          {
+            path: ':placeId',
+            component: OfferBookingsPage,
+          }
+        ]
+      },
+      {
+        path: '',
+        redirectTo: '/places/tabs/discover',
+        pathMatch: 'full'
       }
     ]
   },
   {
-    path: 'offers',
-    children: [
-      {
-        path: '',
-        component: OffersPage,
-      },
-      {
-        path: 'new',
-        component: NewOfferPage,
-      },
-      {
-        path: 'edit/:placeId',
-        component: EditOfferPage,
-      },
-      {
-        path: ':placeId',
-        component: OfferBookingsPage,
-      }
-    ]
+    path: '',
+    redirectTo: '/places/tabs/discover',
+    pathMatch: 'full'
   }
 ];
 
