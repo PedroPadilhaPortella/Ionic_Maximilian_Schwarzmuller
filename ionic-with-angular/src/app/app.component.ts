@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
+import { AuthService } from './auth/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -13,9 +14,14 @@ import { IonicModule } from '@ionic/angular';
   ],
 })
 export class AppComponent {
-  constructor() {}
+  
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+  ) { }
 
   logout() {
-    console.log('Logout');
+    this.authService.logout();
+    this.router.navigateByUrl('/auth');
   }
 }

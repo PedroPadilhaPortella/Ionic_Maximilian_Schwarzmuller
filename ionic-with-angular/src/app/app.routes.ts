@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { AuthGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -10,10 +11,12 @@ export const routes: Routes = [
   },
   {
     path: 'places',
-    loadChildren: () => import('./places/places.module').then( m => m.PlacesPageModule)
+    loadChildren: () => import('./places/places.module').then( m => m.PlacesPageModule),
+    canLoad: [AuthGuard]
   },
   {
     path: 'bookings',
-    loadChildren: () => import('./bookings/bookings.module').then( m => m.BookingsPageModule)
+    loadChildren: () => import('./bookings/bookings.module').then( m => m.BookingsPageModule),
+    canLoad: [AuthGuard]
   },
 ];

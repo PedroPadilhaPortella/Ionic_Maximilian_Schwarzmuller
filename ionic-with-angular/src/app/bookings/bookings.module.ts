@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { BookingsPageRoutingModule } from './bookings.page.routing.module';
 import { BookingsPage } from './bookings.page';
+import { CreateBookingModalComponent } from './create-booking-modal/create-booking-modal.component';
 
 @NgModule({
   declarations: [
-    BookingsPage
+    BookingsPage,
   ],
   imports: [
     IonicModule, 
