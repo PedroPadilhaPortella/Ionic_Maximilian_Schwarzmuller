@@ -19,17 +19,17 @@ export class PlacesService {
   private _places: Place[] = [
     {
       id: '1',
-      title: 'São Paulo',
-      description: 'São Paulo',
-      price: 12,
-      imageUrl: 'https://www.visitbrasil.com/wp-content/uploads/2021/08/Sao-Paulo-SP-Visit-Brasil-7-1-1024x683.jpg'
-    },
-    {
-      id: '2',
       title: 'Bratislava',
       description: 'Bratislava',
       price: 18,
       imageUrl: 'https://www.viajoteca.com/wp-content/uploads/2014/09/Bratislava-Por-RastoS1.jpg'
+    },
+    {
+      id: '2',
+      title: 'São Paulo',
+      description: 'São Paulo',
+      price: 12,
+      imageUrl: 'https://www.visitbrasil.com/wp-content/uploads/2021/08/Sao-Paulo-SP-Visit-Brasil-7-1-1024x683.jpg'
     },
     {
       id: '3',
