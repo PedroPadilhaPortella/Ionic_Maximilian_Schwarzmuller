@@ -11,6 +11,7 @@ import { OfferBookingsPage } from './offers/offer-bookings/offer-bookings.page';
 import { NewOfferPage } from './offers/new-offer/new-offer.page';
 import { EditOfferPage } from './offers/edit-offer/edit-offer.page';
 import { CreateBookingModalComponent } from '../bookings/create-booking-modal/create-booking-modal.component';
+import { OfferItemComponent } from './offers/offer-item/offer-item.component';
 
 @NgModule({
   declarations: [
@@ -22,6 +23,7 @@ import { CreateBookingModalComponent } from '../bookings/create-booking-modal/cr
     EditOfferPage,
     OfferBookingsPage,
     CreateBookingModalComponent,
+    OfferItemComponent,
   ],
   imports: [
     IonicModule, 
