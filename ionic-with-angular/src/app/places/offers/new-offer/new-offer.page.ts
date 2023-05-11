@@ -13,7 +13,13 @@ export class NewOfferPage implements OnInit {
 
   constructor(
     private router: Router
-  ) {
+  ) { }
+
+  ngOnInit() {
+    this.createForm();
+  }
+
+  createForm() {
     this.form = new FormGroup({
       title: new FormControl(null, {
         updateOn: 'blur',
@@ -37,8 +43,6 @@ export class NewOfferPage implements OnInit {
       }),
     });
   }
-
-  ngOnInit() { }
 
   createOffer() {
     if (this.form.valid) {
