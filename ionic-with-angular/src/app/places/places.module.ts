@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { DiscoverPage } from './discover/discover.page';
 import { PlaceDetailPage } from './discover/place-detail/place-detail.page';
@@ -28,7 +28,7 @@ import { OfferItemComponent } from './offers/offer-item/offer-item.component';
   imports: [
     IonicModule, 
     CommonModule, 
-    FormsModule,
+    ReactiveFormsModule,
     PlacesPageRoutingModule,
   ],
   entryComponents: [CreateBookingModalComponent]
