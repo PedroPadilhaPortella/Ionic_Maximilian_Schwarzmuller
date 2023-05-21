@@ -1,18 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Place } from '../../place.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NavController } from '@ionic/angular';
 import { PlacesService } from '../../places.service';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-edit-offer',
   templateUrl: './edit-offer.page.html',
   styleUrls: ['./edit-offer.page.scss']
 })
-export class EditOfferPage implements OnInit {
+export class EditOfferPage implements OnInit, OnDestroy {
   place!: Place;
   form!: FormGroup;
+  private placeSub!: Subscription
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -26,10 +28,16 @@ export class EditOfferPage implements OnInit {
     this.getPlaceById();
   }
 
+  ngOnDestroy(): void {
+    this.placeSub.unsubscribe();
+  }
+
   getPlaceById() {
     this.activatedRoute.paramMap.subscribe(paramMap => {
       const placeId = paramMap.get('placeId')!;
-      this.place = this.placesService.getPlace(placeId)!;
+      this.placeSub = this.placesService.getPlace(placeId).subscribe((place) => {
+        this.place = place!;
+      });
 
       if (!paramMap.has('placeId') || this.place == null) {
         this.navController.navigateBack(`/places/tabs/offers/${placeId}`);

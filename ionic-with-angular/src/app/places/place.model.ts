@@ -8,5 +8,6 @@ export class Place {
     public price: number,
     public avaliableFrom: Date,
     public avaliableTo: Date,
+    public userId: string,
   ) { }
 }
