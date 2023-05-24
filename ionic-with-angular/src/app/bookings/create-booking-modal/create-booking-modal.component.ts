@@ -23,6 +23,7 @@ export class CreateBookingModalComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    console.warn(this.selectedMode)
     this.createForm();
     this.setDates();
   }
@@ -45,15 +46,15 @@ export class CreateBookingModalComponent implements OnInit {
 
   createForm() {
     this.form = new FormGroup({
-      firstName: new FormControl(null, {
+      firstName: new FormControl('', {
         updateOn: 'blur',
         validators: [Validators.required]
       }),
-      lastName: new FormControl(null, {
+      lastName: new FormControl('', {
         updateOn: 'blur',
         validators: [Validators.required]
       }),
-      guestNumber: new FormControl(null, {
+      guestNumber: new FormControl(0, {
         updateOn: 'blur',
         validators: [Validators.required, Validators.min(1)]
       }),
@@ -70,7 +71,7 @@ export class CreateBookingModalComponent implements OnInit {
 
   bookPlace() {
     if(this.form.valid) {
-      this.modalController.dismiss({ bookingData: this.form.value }, 'confirm');
+      this.modalController.dismiss({ ...this.form.value }, 'confirm');
     }
   }
 
