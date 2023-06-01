@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Place } from '../../place.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LoadingController, NavController } from '@ionic/angular';
+import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { PlacesService } from '../../places.service';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -12,12 +12,15 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./edit-offer.page.scss']
 })
 export class EditOfferPage implements OnInit, OnDestroy {
+  placeId!: string
   place!: Place;
   form!: FormGroup;
+  isLoading = false;
   private placeSub!: Subscription
 
   constructor(
     private activatedRoute: ActivatedRoute,
+    private alertController: AlertController,
     private LoadingCtrl: LoadingController,
     private navController: NavController,
     private placesService: PlacesService,
@@ -34,18 +37,31 @@ export class EditOfferPage implements OnInit, OnDestroy {
   }
 
   getPlaceById() {
+    this.isLoading = true;
+
     this.activatedRoute.paramMap.subscribe(paramMap => {
-      const placeId = paramMap.get('placeId')!;
-      this.placeSub = this.placesService.getPlace(placeId).subscribe((place) => {
+      this.placeId = paramMap.get('placeId')!;
+
+      this.placeSub = this.placesService.getPlace(this.placeId).subscribe((place) => {
         this.place = place!;
+
+        if (!paramMap.has('placeId') || this.place == null) {
+          this.navController.navigateBack(`/places/tabs/offers/${this.placeId}`);
+        }
+  
+        this.form.controls['title'].setValue(this.place.title);
+        this.form.controls['description'].setValue(this.place.description);
+
+        this.isLoading = false;
+      }, (error) => {
+        this.alertController.create({ 
+          header: 'An error ocurred!', 
+          message: 'Place could not be fetched. please try again later.',
+          buttons: [{ text: 'Okay', handler: () => this.router.navigate(['/places/tabs/offers'])}]
+        }).then((alertEl) => {
+          alertEl.present();
+        })
       });
-
-      if (!paramMap.has('placeId') || this.place == null) {
-        this.navController.navigateBack(`/places/tabs/offers/${placeId}`);
-      }
-
-      this.form.controls['title'].setValue(this.place.title);
-      this.form.controls['description'].setValue(this.place.description);
     })
   }
 

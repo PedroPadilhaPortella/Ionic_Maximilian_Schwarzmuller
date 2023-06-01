@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ActionSheetController, LoadingController, ModalController, NavController } from '@ionic/angular';
+import { ActionSheetController, AlertController, LoadingController, ModalController, NavController } from '@ionic/angular';
 import { PlacesService } from '../../places.service';
 import { Place } from '../../place.model';
 import { CreateBookingModalComponent } from 'src/app/bookings/create-booking-modal/create-booking-modal.component';
@@ -16,18 +16,21 @@ import { AuthService } from 'src/app/auth/auth.service';
 export class PlaceDetailPage implements OnInit, OnDestroy {
   place!: Place;
   isBookable: boolean = false
+  isLoading = false;
   private placeSub!: Subscription
 
   constructor(
     private actionSheetController: ActionSheetController,
     private loadingController: LoadingController,
     private modalController: ModalController,
+    private alertController: AlertController,
     private activatedRoute: ActivatedRoute,
     private bookingService: BookingService,
     private placesService: PlacesService,
     private navController: NavController,
     private authService: AuthService,
-    ) { }
+    private router: Router
+  ) { }
 
   ngOnInit() {
     this.getPlaceById();
@@ -38,16 +41,25 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
   }
 
   getPlaceById() {
+    this.isLoading = true;
     this.activatedRoute.paramMap.subscribe(paramMap => {
       const placeId = paramMap.get('placeId')!;
       this.placeSub = this.placesService.getPlace(placeId).subscribe((place) => {
         this.place = place!;
+        if (!paramMap.has('placeId') || this.place == null) {
+          this.navController.navigateBack('/places/tabs/discover');
+        }
+        this.isBookable = this.place.userId !== this.authService.userId
+        this.isLoading = false;
+      }, (error) => {
+        this.alertController.create({
+          header: 'An error ocurred!',
+          message: 'Place could not be fetched. please try again later.',
+          buttons: [{ text: 'Okay', handler: () => this.router.navigate(['/places/tabs/discover']) }]
+        }).then((alertEl) => {
+          alertEl.present();
+        })
       });
-      
-      if (!paramMap.has('placeId') || this.place == null) {
-        this.navController.navigateBack('/places/tabs/discover');
-      }
-      this.isBookable = this.place.userId !== this.authService.userId
     })
   }
 

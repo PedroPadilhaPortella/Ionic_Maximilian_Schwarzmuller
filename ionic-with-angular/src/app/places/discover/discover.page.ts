@@ -14,6 +14,7 @@ export class DiscoverPage implements OnInit, OnDestroy {
   allPlaces!: Place[];
   places!: Place[];
   userId!: string;
+  isLoading = false;
   private filter = 'all';
   private placesSub!: Subscription
 
@@ -29,6 +30,13 @@ export class DiscoverPage implements OnInit, OnDestroy {
       this.places = places;
       this.filterUpdate(this.filter);
     })
+  }
+
+  ionViewWillEnter() {
+    this.isLoading = true;
+    this.placesService.fetchPlaces().subscribe(() => {
+      this.isLoading = false;
+    });
   }
 
   ngOnDestroy(): void {
