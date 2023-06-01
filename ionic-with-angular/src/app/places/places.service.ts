@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { delay, map, switchMap, take, tap } from 'rxjs/operators';
+import { map, switchMap, take, tap } from 'rxjs/operators';
 import { DEFAULT_PLACE_IMG } from 'src/assets/default_place';
-import { PRAGA_IMG } from 'src/assets/praga';
 import { AuthService } from '../auth/auth.service';
 import { Place } from './place.model';
 
@@ -14,7 +13,7 @@ type PlaceResponse = Omit<Place, "id">;
 })
 export class PlacesService {
 
-  FIREBASE_URL = 'https://ionic-angular-8de26-default-rtdb.firebaseio.com'
+  FIREBASE_URL = 'https://ionic-angular-8de26-default-rtdb.firebaseio.com';
 
   private _places = new BehaviorSubject<Place[]>([]);
 

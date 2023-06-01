@@ -1,37 +1,56 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Booking } from './booking.model';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { take, map, tap, delay } from 'rxjs/operators';
+import { delay, map, switchMap, take, tap } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
-import { PRAGA_IMG } from 'src/assets/praga';
+import { Booking } from './booking.model';
+
+type BookingResponse = Omit<Booking, "id">;
 
 @Injectable({
   providedIn: 'root'
 })
 export class BookingService {
 
-  private _bookings = new BehaviorSubject<Booking[]>(
-    [
-      {
-        id: '1',
-        placeId: '3',
-        userId: '1',
-        guestNumber: 1,
-        placeTitle: 'Praga',
-        bookedFrom: new Date(),
-        bookedTo: new Date(),
-        firstName: 'Pedro',
-        lastName: 'Cruz',
-        placeImage: PRAGA_IMG
-      }
-    ]
-  );
+  FIREBASE_URL = 'https://ionic-angular-8de26-default-rtdb.firebaseio.com';
 
-  get bookings(): Observable<Booking[]>  {
+  private _bookings = new BehaviorSubject<Booking[]>([]);
+
+  get bookings(): Observable<Booking[]> {
     return this._bookings.asObservable();
   }
 
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService, private http: HttpClient) { }
+
+  fetchBookings() {
+    const userId = this.authService.userId
+    return this.http.get<{ [key: string]: BookingResponse }>
+      (`${this.FIREBASE_URL}/bookings.json?orderBy="userId"&equalTo="${userId}"`)
+      .pipe(
+        map((response) => {
+          const bookings = []
+          for (const key in response) {
+            if (response.hasOwnProperty(key)) {
+              bookings.push(new Booking(key,
+                response[key].placeId,
+                response[key].userId,
+                response[key].placeTitle,
+                response[key].placeImage,
+                response[key].firstName,
+                response[key].lastName,
+                response[key].guestNumber,
+                new Date(response[key].bookedFrom),
+                new Date(response[key].bookedTo),
+              ))
+            }
+          }
+          return bookings;
+        }),
+        tap(bookings => {
+          this._bookings.next(bookings);
+        }),
+      )
+  }
 
   getBook(id: string) {
     return this._bookings
@@ -41,16 +60,11 @@ export class BookingService {
       )
   }
 
-  addBooking(
-    placeId: string,
-    placeTitle: string,
-    placeImage: string,
-    firtName: string,
-    lastName: string,
-    guestNumber: number,
-    dateFrom: Date,
-    dateTo: Date,
-  ) {
+  addBooking(placeId: string, placeTitle: string, placeImage: string, firtName: string,
+    lastName: string, guestNumber: number, dateFrom: Date, dateTo: Date) {
+      
+    let generatedId: string;
+
     const booking = new Booking(
       Math.random().toString(), placeId,
       this.authService.userId,
@@ -63,21 +77,29 @@ export class BookingService {
       dateTo
     );
 
-    return this.bookings
+    return this.http.post<{ name: string }>(
+      `${this.FIREBASE_URL}/bookings.json`, { ...booking, id: null }
+    )
       .pipe(
-        take(1),
-        delay(1000),
-        tap(bookings => {
-          this._bookings.next(bookings.concat(booking));
+        switchMap((response) => {
+          generatedId = response.name;
+          return this.bookings;
         }),
+        take(1),
+        tap((bookings) => {
+          booking.id = generatedId;
+          return this._bookings.next(bookings.concat(booking));
+        })
       );
   }
 
   cancelBooking(bookingId: string) {
-    return this.bookings
+    return this.http.delete(`${this.FIREBASE_URL}/bookings/${bookingId}.json`)
       .pipe(
+        switchMap(() => {
+          return this.bookings;
+        }),
         take(1),
-        delay(1000),
         tap(bookings => {
           this._bookings.next(bookings.filter(booking => booking.id !== bookingId));
         }),
