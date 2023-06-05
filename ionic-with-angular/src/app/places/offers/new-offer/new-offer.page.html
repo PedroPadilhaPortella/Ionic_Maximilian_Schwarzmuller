@@ -5,7 +5,7 @@
     </ion-buttons>
     <ion-title>New Offer</ion-title>
     <ion-buttons slot="primary">
-      <ion-button (click)="createOffer()" [disabled]="form.invalid">
+      <ion-button (click)="createOffer()" [disabled]="form.invalid || !form.get('image')?.value">
         <ion-icon name="checkmark"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -46,7 +46,7 @@
       </ion-row>
 
       <ion-row>
-        <ion-col size-sm="6">
+        <ion-col size-sm="6" offset-sm="3">
           <ion-item>
             <ion-datetime id="datetimeFrom" formControlName="dateFrom" presentation="date" min="2023-01-01"
               max="2030-01-01">
@@ -72,6 +72,12 @@
       <ion-row>
         <ion-col size-sm="6" offset-sm="3" class="ion-text-center">
           <app-location-picker (locationPick)="locationPick($event)"></app-location-picker>
+        </ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col size-sm="6" offset-sm="3" class="ion-text-center">
+          <app-image-picker (imagePick)="imagePick($event)"></app-image-picker>
         </ion-col>
       </ion-row>
 

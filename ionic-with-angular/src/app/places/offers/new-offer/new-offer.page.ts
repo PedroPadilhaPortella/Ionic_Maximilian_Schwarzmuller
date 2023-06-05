@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PlacesService } from '../../places.service';
-import { LoadingController } from '@ionic/angular';
+import { AlertController, LoadingController } from '@ionic/angular';
 import { PlaceLocation } from '../../location.model';
+import { base64toBlob, formatImage } from '../../../utils/utils';
 
 @Component({
   selector: 'app-new-offer',
@@ -17,7 +18,8 @@ export class NewOfferPage implements OnInit {
   constructor(
     private router: Router,
     private placesService: PlacesService,
-    private loadingCtrl: LoadingController
+    private loadingCtrl: LoadingController,
+    private alertController: AlertController,
   ) { }
 
   ngOnInit() {
@@ -50,6 +52,7 @@ export class NewOfferPage implements OnInit {
         updateOn: 'blur',
         validators: [Validators.required]
       }),
+      image: new FormControl(null),
     });
   }
 
@@ -57,8 +60,25 @@ export class NewOfferPage implements OnInit {
     this.form.patchValue({ location: placeLocation })
   }
 
+  imagePick(imageData: string | File) {
+    let imageFile: any
+    if (typeof imageData === 'string') {
+      try {
+        imageFile = base64toBlob(formatImage(imageData), 'image/jpeg')
+      } catch (error) {
+        console.error(error)
+        this.showErrorAlert();
+      }
+    } else {
+      imageFile = imageData;
+    }
+    
+    this.form.patchValue({ image: imageFile });
+  }
+
   createOffer() {
-    if (this.form.valid) {
+    if (this.form.valid && this.form.get('image')?.value) {
+
       this.loadingCtrl.create({ message: 'Creating Place' })
         .then(loadingEl => {
           loadingEl.present();
@@ -76,5 +96,14 @@ export class NewOfferPage implements OnInit {
           });
         });
     }
+  }
+
+  private showErrorAlert() {
+    this.alertController.create({
+      header: 'Could not get the image',
+      buttons: ['Ok'],
+    }).then((alertEl) => {
+      alertEl.present();
+    })
   }
 }

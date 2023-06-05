@@ -23,7 +23,6 @@ export class CreateBookingModalComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    console.warn(this.selectedMode)
     this.createForm();
     this.setDates();
   }
