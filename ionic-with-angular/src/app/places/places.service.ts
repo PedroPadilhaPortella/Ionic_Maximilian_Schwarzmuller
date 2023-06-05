@@ -5,6 +5,7 @@ import { map, switchMap, take, tap } from 'rxjs/operators';
 import { DEFAULT_PLACE_IMG } from 'src/assets/default_place';
 import { AuthService } from '../auth/auth.service';
 import { Place } from './place.model';
+import { PlaceLocation } from './location.model';
 
 type PlaceResponse = Omit<Place, "id">;
 
@@ -37,7 +38,8 @@ export class PlacesService {
                 response[key].price,
                 response[key].avaliableFrom,
                 response[key].avaliableTo,
-                response[key].userId
+                response[key].userId,
+                response[key].location
               ))
             }
           }
@@ -61,13 +63,21 @@ export class PlacesService {
             response.price,
             new Date(response.avaliableFrom),
             new Date(response.avaliableTo),
-            response.userId
+            response.userId,
+            response.location
           );
         })
       );
   }
 
-  addPlace(title: string, description: string, price: number, dateFrom: Date, dateTo: Date) {
+  addPlace(
+    title: string,
+    description: string,
+    price: number,
+    dateFrom: Date,
+    dateTo: Date,
+    location: PlaceLocation
+  ) {
     let generatedId: string;
     const place = new Place(
       Math.random().toString(),
@@ -78,6 +88,7 @@ export class PlacesService {
       dateFrom,
       dateTo,
       this.authService.userId,
+      location
     );
 
     return this.http.post<{ name: string }>(
@@ -121,6 +132,7 @@ export class PlacesService {
             oldPlace.avaliableFrom,
             oldPlace.avaliableTo,
             oldPlace.userId,
+            oldPlace.location
           );
 
           return this.http.put(

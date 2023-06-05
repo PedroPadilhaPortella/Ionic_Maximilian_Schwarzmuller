@@ -11,6 +11,7 @@ import { OfferItemComponent } from './offers/offer-item/offer-item.component';
 import { OffersPage } from './offers/offers.page';
 import { PlacesPage } from './places.page';
 import { PlacesPageRoutingModule } from './places.page.routing.module';
+import { SharedModule } from '../shared/shared.module';
 
 @NgModule({
   declarations: [
@@ -29,6 +30,7 @@ import { PlacesPageRoutingModule } from './places.page.routing.module';
     FormsModule,
     ReactiveFormsModule,
     PlacesPageRoutingModule,
+    SharedModule,
   ],
   entryComponents: [CreateBookingModalComponent]
 })
