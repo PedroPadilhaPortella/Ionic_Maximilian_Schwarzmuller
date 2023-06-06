@@ -53,6 +53,10 @@ export class NewOfferPage implements OnInit {
         validators: [Validators.required]
       }),
       image: new FormControl(null),
+      imageUrl: new FormControl(null, {
+        updateOn: 'blur',
+        validators: [Validators.required]
+      }),
     });
   }
 
@@ -77,7 +81,7 @@ export class NewOfferPage implements OnInit {
   }
 
   createOffer() {
-    if (this.form.valid && this.form.get('image')?.value) {
+    if (this.form.valid) {
 
       this.loadingCtrl.create({ message: 'Creating Place' })
         .then(loadingEl => {
@@ -90,6 +94,7 @@ export class NewOfferPage implements OnInit {
             new Date(this.form.value.dateFrom),
             new Date(this.form.value.dateTo),
             this.form.value.location,
+            this.form.value.imageUrl,
           ).subscribe(() => {
             loadingEl.dismiss();
             this.router.navigateByUrl('/places/tabs/offers');

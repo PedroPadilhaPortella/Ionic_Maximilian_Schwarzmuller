@@ -9,6 +9,11 @@ import { PlaceLocation } from './location.model';
 
 type PlaceResponse = Omit<Place, "id">;
 
+interface UploadImage {
+  imageUrl: string;
+  imagePath: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -76,14 +81,15 @@ export class PlacesService {
     price: number,
     dateFrom: Date,
     dateTo: Date,
-    location: PlaceLocation
+    location: PlaceLocation,
+    imageUrl: string
   ) {
     let generatedId: string;
     const place = new Place(
       Math.random().toString(),
       title,
       description,
-      DEFAULT_PLACE_IMG,
+      imageUrl,
       price,
       dateFrom,
       dateTo,
