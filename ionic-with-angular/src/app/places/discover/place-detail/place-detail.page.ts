@@ -4,7 +4,7 @@ import { ActionSheetController, AlertController, LoadingController, ModalControl
 import { PlacesService } from '../../places.service';
 import { Place } from '../../place.model';
 import { CreateBookingModalComponent } from 'src/app/bookings/create-booking-modal/create-booking-modal.component';
-import { Subscription } from 'rxjs';
+import { Subscription, map, switchMap } from 'rxjs';
 import { BookingService } from 'src/app/bookings/booking.service';
 import { AuthService } from 'src/app/auth/auth.service';
 
@@ -13,11 +13,10 @@ import { AuthService } from 'src/app/auth/auth.service';
   templateUrl: './place-detail.page.html',
   styleUrls: ['./place-detail.page.scss'],
 })
-export class PlaceDetailPage implements OnInit, OnDestroy {
+export class PlaceDetailPage implements OnInit {
   place!: Place;
   isBookable: boolean = false
   isLoading = false;
-  private placeSub!: Subscription
 
   constructor(
     private actionSheetController: ActionSheetController,
@@ -36,31 +35,36 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
     this.getPlaceById();
   }
 
-  ngOnDestroy(): void {
-    this.placeSub.unsubscribe();
-  }
-
   getPlaceById() {
     this.isLoading = true;
-    this.activatedRoute.paramMap.subscribe(paramMap => {
-      const placeId = paramMap.get('placeId')!;
-      this.placeSub = this.placesService.getPlace(placeId).subscribe((place) => {
-        this.place = place!;
-        if (!paramMap.has('placeId') || this.place == null) {
-          this.navController.navigateBack('/places/tabs/discover');
+    let userIdFetched: string;
+
+    this.authService.userId
+      .pipe(switchMap((userId) => {
+        if (userId) {
+          userIdFetched = userId
+          return this.activatedRoute.paramMap
+            .pipe(switchMap((paramMap) => {
+              const placeId = paramMap.get('placeId')!;
+
+              return this.placesService.getPlace(placeId)
+                .pipe(map((place) => {
+                  this.place = place!;
+                  if (!paramMap.has('placeId') || this.place == null) {
+                    this.navController.navigateBack('/places/tabs/discover');
+                  }
+                }))
+            }))
+        } else {
+          throw new Error('No user Id found.');
         }
-        this.isBookable = this.place.userId !== this.authService.userId
-        this.isLoading = false;
-      }, (error) => {
-        this.alertController.create({
-          header: 'An error ocurred!',
-          message: 'Place could not be fetched. please try again later.',
-          buttons: [{ text: 'Okay', handler: () => this.router.navigate(['/places/tabs/discover']) }]
-        }).then((alertEl) => {
-          alertEl.present();
-        })
-      });
-    })
+      })).subscribe({
+        next: () => {
+          this.isBookable = this.place.userId !== userIdFetched
+          this.isLoading = false;
+        },
+        error: () => this.showErrorAlert()
+      })
   }
 
   onBookPlace() {
@@ -103,5 +107,15 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
           });
       }
     });
+  }
+
+  showErrorAlert() {
+    this.alertController.create({
+      header: 'An error ocurred!',
+      message: 'Place could not be fetched. please try again later.',
+      buttons: [{ text: 'Okay', handler: () => this.router.navigate(['/places/tabs/discover']) }]
+    }).then((alertEl) => {
+      alertEl.present();
+    })
   }
 }

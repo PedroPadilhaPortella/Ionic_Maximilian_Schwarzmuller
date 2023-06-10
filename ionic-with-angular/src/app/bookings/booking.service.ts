@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { delay, map, switchMap, take, tap } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
 import { Booking } from './booking.model';
@@ -22,34 +22,40 @@ export class BookingService {
 
   constructor(private authService: AuthService, private http: HttpClient) { }
 
-  fetchBookings() {
-    const userId = this.authService.userId
-    return this.http.get<{ [key: string]: BookingResponse }>
-      (`${this.FIREBASE_URL}/bookings.json?orderBy="userId"&equalTo="${userId}"`)
-      .pipe(
-        map((response) => {
-          const bookings = []
-          for (const key in response) {
-            if (response.hasOwnProperty(key)) {
-              bookings.push(new Booking(key,
-                response[key].placeId,
-                response[key].userId,
-                response[key].placeTitle,
-                response[key].placeImage,
-                response[key].firstName,
-                response[key].lastName,
-                response[key].guestNumber,
-                new Date(response[key].bookedFrom),
-                new Date(response[key].bookedTo),
-              ))
-            }
+  fetchBookings(): Observable<Booking[]> {
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap((userId) => {
+        if (userId) {
+          return this.http.get<{ [key: string]: BookingResponse }>
+            (`${this.FIREBASE_URL}/bookings.json?orderBy="userId"&equalTo="${userId}"`)
+        } else {
+          throw new Error('No user Id found.');
+        }
+      }),
+      map((response) => {
+        const bookings = []
+        for (const key in response) {
+          if (response.hasOwnProperty(key)) {
+            bookings.push(new Booking(key,
+              response[key].placeId,
+              response[key].userId,
+              response[key].placeTitle,
+              response[key].placeImage,
+              response[key].firstName,
+              response[key].lastName,
+              response[key].guestNumber,
+              new Date(response[key].bookedFrom),
+              new Date(response[key].bookedTo),
+            ))
           }
-          return bookings;
-        }),
-        tap(bookings => {
-          this._bookings.next(bookings);
-        }),
-      )
+        }
+        return bookings;
+      }),
+      tap(bookings => {
+        this._bookings.next(bookings);
+      }),
+    )
   }
 
   getBook(id: string) {
@@ -60,37 +66,52 @@ export class BookingService {
       )
   }
 
-  addBooking(placeId: string, placeTitle: string, placeImage: string, firtName: string,
-    lastName: string, guestNumber: number, dateFrom: Date, dateTo: Date) {
-      
+  addBooking(
+    placeId: string,
+    placeTitle: string,
+    placeImage: string,
+    firtName: string,
+    lastName: string,
+    guestNumber: number,
+    dateFrom: Date,
+    dateTo: Date
+  ) {
     let generatedId: string;
+    let booking: Booking;
 
-    const booking = new Booking(
-      Math.random().toString(), placeId,
-      this.authService.userId,
-      placeTitle,
-      placeImage,
-      firtName,
-      lastName,
-      guestNumber,
-      dateFrom,
-      dateTo
-    );
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap((userId) => {
+        if (userId) {
+          booking = new Booking(
+            Math.random().toString(), placeId,
+            userId,
+            placeTitle,
+            placeImage,
+            firtName,
+            lastName,
+            guestNumber,
+            dateFrom,
+            dateTo
+          );
 
-    return this.http.post<{ name: string }>(
-      `${this.FIREBASE_URL}/bookings.json`, { ...booking, id: null }
+          return this.http.post<{ name: string }>(
+            `${this.FIREBASE_URL}/bookings.json`, { ...booking, id: null }
+          )
+        } else {
+          throw new Error('No user Id found.');
+        }
+      }),
+      switchMap((response) => {
+        generatedId = response.name;
+        return this.bookings;
+      }),
+      take(1),
+      tap((bookings) => {
+        booking.id = generatedId;
+        return this._bookings.next(bookings.concat(booking));
+      })
     )
-      .pipe(
-        switchMap((response) => {
-          generatedId = response.name;
-          return this.bookings;
-        }),
-        take(1),
-        tap((bookings) => {
-          booking.id = generatedId;
-          return this._bookings.next(bookings.concat(booking));
-        })
-      );
   }
 
   cancelBooking(bookingId: string) {

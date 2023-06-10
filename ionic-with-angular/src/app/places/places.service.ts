@@ -85,32 +85,41 @@ export class PlacesService {
     imageUrl: string
   ) {
     let generatedId: string;
-    const place = new Place(
-      Math.random().toString(),
-      title,
-      description,
-      imageUrl,
-      price,
-      dateFrom,
-      dateTo,
-      this.authService.userId,
-      location
-    );
+    let place: Place;
 
-    return this.http.post<{ name: string }>(
-      `${this.FIREBASE_URL}/oferred-places.json`, { ...place, id: null }
-    )
-      .pipe(
-        switchMap((response) => {
-          generatedId = response.name;
-          return this.places;
-        }),
-        take(1),
-        tap((places) => {
-          place.id = generatedId;
-          return this._places.next(places.concat(place));
-        })
-      );
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap((userId) => {
+        if (userId) {
+          place = new Place(
+            Math.random().toString(),
+            title,
+            description,
+            imageUrl,
+            price,
+            dateFrom,
+            dateTo,
+            userId,
+            location
+          );
+
+          return this.http.post<{ name: string }>(
+            `${this.FIREBASE_URL}/oferred-places.json`, { ...place, id: null }
+          )
+        } else {
+          throw new Error('No user Id found.');
+        }
+      }),
+      switchMap((response) => {
+        generatedId = response.name;
+        return this.places;
+      }),
+      take(1),
+      tap((places) => {
+        place.id = generatedId;
+        return this._places.next(places.concat(place));
+      })
+    );
   }
 
   updatePlace(placeId: string, title: string, description: string) {

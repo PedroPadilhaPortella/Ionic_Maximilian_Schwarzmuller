@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PlacesService } from '../places.service';
 import { Place } from '../place.model';
-import { Subscription } from 'rxjs';
+import { Subscription, take } from 'rxjs';
 import { AuthService } from 'src/app/auth/auth.service';
 
 @Component({
@@ -13,7 +13,6 @@ export class DiscoverPage implements OnInit, OnDestroy {
 
   allPlaces!: Place[];
   places!: Place[];
-  userId!: string;
   isLoading = false;
   private filter = 'all';
   private placesSub!: Subscription
@@ -24,7 +23,6 @@ export class DiscoverPage implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    this.userId = this.authService.userId
     this.placesSub = this.placesService.places.subscribe((places) => {
       this.allPlaces = places;
       this.places = places;
@@ -50,8 +48,12 @@ export class DiscoverPage implements OnInit, OnDestroy {
   }
 
   filterUpdate(filter: string) {
-    const isShown = (place: Place) => filter === 'all' || place.userId !== this.authService.userId;
-    this.places = this.allPlaces.filter(isShown);
-    this.filter = filter;
+    this.authService.userId
+    .pipe(take(1))
+    .subscribe((userId) => {
+      const isShown = (place: Place) => filter === 'all' || place.userId !== userId;
+      this.places = this.allPlaces.filter(isShown);
+      this.filter = filter;
+    });
   }
 }

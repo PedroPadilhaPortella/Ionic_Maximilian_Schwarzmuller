@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { LoadingController } from '@ionic/angular';
-import { AuthService } from './auth.service';
 import { NgForm } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AlertController, LoadingController } from '@ionic/angular';
+import { AuthService } from './auth.service';
+import { Observable } from 'rxjs';
+import { AuthResponse } from './auth.model';
 
 @Component({
   selector: 'app-auth',
@@ -17,10 +19,10 @@ export class AuthPage implements OnInit {
     private authService: AuthService,
     private router: Router,
     private loadingController: LoadingController,
+    private alertController: AlertController,
   ) { }
 
-  ngOnInit() {
-  }
+  ngOnInit() { }
 
   switchAuthMode() {
     this.isLogin = !this.isLogin;
@@ -29,34 +31,43 @@ export class AuthPage implements OnInit {
   submit(authForm: NgForm) {
     if (authForm.valid) {
       const { email, password } = authForm.value
-
-      if (this.isLogin) {
-        this.login(email, password);
-      } else {
-        this.signUp(email, password);
-      }
+      this.authenticate(email, password);
     }
   }
 
-  login(email: string, password: string) {
-    this.authService.login();
-    this.loadingController.create({ keyboardClose: true, message: 'Loading' }).then((loadingEl) => {
-      loadingEl.present();
-      setTimeout(() => {
-        loadingEl.dismiss();
-        this.router.navigateByUrl('/places/tabs/discover');
-      }, 1000);
-    });
+  authenticate(email: string, password: string) {
+    this.loadingController.create({ keyboardClose: true, message: 'Logging in...' })
+      .then((loadingEl) => {
+        loadingEl.present();
+
+        let authObs: Observable<AuthResponse>
+
+        if (this.isLogin) {
+          authObs = this.authService.login(email, password);
+        } else {
+          authObs = this.authService.register(email, password);
+        }
+
+        authObs.subscribe({
+          next: () => {
+            loadingEl.dismiss();
+            this.router.navigateByUrl('/places/tabs/discover');
+          },
+          error: (response) => {
+            loadingEl.dismiss();
+            this.showAlert(response.error.error.message);
+          },
+        });
+      });
   }
 
-  signUp(email: string, password: string) {
-    this.authService.login();
-    this.loadingController.create({ keyboardClose: true, message: 'Loading' }).then((loadingEl) => {
-      loadingEl.present();
-      setTimeout(() => {
-        loadingEl.dismiss();
-        this.router.navigateByUrl('/places/tabs/discover');
-      }, 1000);
-    });
+  showAlert(message: string) {
+    this.alertController.create({
+      header: 'Authenticaion failed!',
+      message: message,
+      buttons: ['Okay']
+    }).then((alertEl) => {
+      alertEl.present();
+    })
   }
 }
