@@ -32,6 +32,7 @@ export class AuthPage implements OnInit {
     if (authForm.valid) {
       const { email, password } = authForm.value
       this.authenticate(email, password);
+      authForm.reset();
     }
   }
 

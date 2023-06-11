@@ -8,9 +8,16 @@ export class User {
   ) { }
 
   get token() {
-    if(this.tokenExpirationDate && this.tokenExpirationDate > new Date()) {
+    if (this.tokenExpirationDate && this.tokenExpirationDate > new Date()) {
       return this._token;
     }
     return null;
+  }
+
+  get tokenDuration(): number {
+    if (this.token) {
+      return this.tokenExpirationDate.getTime() - new Date().getTime();
+    }
+    return 0;
   }
 }

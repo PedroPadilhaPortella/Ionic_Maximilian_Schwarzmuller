@@ -29,9 +29,14 @@ export class PlacesService {
 
   constructor(private authService: AuthService, private http: HttpClient) { }
 
-  fetchPlaces() {
-    return this.http.get<{ [key: string]: PlaceResponse }>(`${this.FIREBASE_URL}/oferred-places.json`)
+  fetchPlaces(): Observable<Place[]> {
+    return this.authService.token
       .pipe(
+        take(1),
+        switchMap((token) => {
+          return this.http
+            .get<{ [key: string]: PlaceResponse }>(`${this.FIREBASE_URL}/oferred-places.json?auth=${token}`)
+        }),
         map((response) => {
           const places = []
           for (const key in response) {
@@ -57,8 +62,13 @@ export class PlacesService {
   }
 
   getPlace(id: string): Observable<Place> {
-    return this.http.get<PlaceResponse>(`${this.FIREBASE_URL}/oferred-places/${id}.json`)
+    return this.authService.token
       .pipe(
+        take(1),
+        switchMap((token) => {
+          return this.http
+            .get<PlaceResponse>(`${this.FIREBASE_URL}/oferred-places/${id}.json?auth=${token}`)
+        }),
         map((response) => {
           return new Place(
             id,
@@ -85,47 +95,62 @@ export class PlacesService {
     imageUrl: string
   ) {
     let generatedId: string;
+    let genToken: string;
     let place: Place;
 
-    return this.authService.userId.pipe(
-      take(1),
-      switchMap((userId) => {
-        if (userId) {
-          place = new Place(
-            Math.random().toString(),
-            title,
-            description,
-            imageUrl,
-            price,
-            dateFrom,
-            dateTo,
-            userId,
-            location
-          );
+    return this.authService.token
+      .pipe(
+        take(1),
+        switchMap((token) => {
+          genToken = token!;
+          return this.authService.userId
+        }),
+        take(1),
+        switchMap((userId) => {
+          if (userId) {
+            place = new Place(
+              Math.random().toString(),
+              title,
+              description,
+              imageUrl,
+              price,
+              dateFrom,
+              dateTo,
+              userId,
+              location
+            );
 
-          return this.http.post<{ name: string }>(
-            `${this.FIREBASE_URL}/oferred-places.json`, { ...place, id: null }
-          )
-        } else {
-          throw new Error('No user Id found.');
-        }
-      }),
-      switchMap((response) => {
-        generatedId = response.name;
-        return this.places;
-      }),
-      take(1),
-      tap((places) => {
-        place.id = generatedId;
-        return this._places.next(places.concat(place));
-      })
-    );
+            return this.http.post<{ name: string }>(
+              `${this.FIREBASE_URL}/oferred-places.json?auth=${genToken}`, { ...place, id: null }
+            )
+          } else {
+            throw new Error('No user Id found.');
+          }
+        }),
+        take(1),
+        switchMap((response) => {
+          generatedId = response.name;
+          return this.places;
+        }),
+        take(1),
+        tap((places) => {
+          place.id = generatedId;
+          return this._places.next(places.concat(place));
+        })
+      );
   }
 
   updatePlace(placeId: string, title: string, description: string) {
     let updatePlaces: Place[]
-    return this.places
+    let genToken: string
+
+    return this.authService.token
       .pipe(
+        take(1),
+        switchMap((token) => {
+          genToken = token!;
+          return this.places
+        }),
         take(1),
         switchMap((places) => {
           if (!places || places.length == 0) {
@@ -151,7 +176,7 @@ export class PlacesService {
           );
 
           return this.http.put(
-            `${this.FIREBASE_URL}/oferred-places/${placeId}.json`,
+            `${this.FIREBASE_URL}/oferred-places/${placeId}.json?auth=${genToken}`,
             { ...updatePlaces[updatePlaceIndex], id: null }
           )
         }),

@@ -53,10 +53,7 @@ export class NewOfferPage implements OnInit {
         validators: [Validators.required]
       }),
       image: new FormControl(null),
-      imageUrl: new FormControl(null, {
-        updateOn: 'blur',
-        validators: [Validators.required]
-      }),
+      imageUrl: new FormControl(''),
     });
   }
 
@@ -94,13 +91,18 @@ export class NewOfferPage implements OnInit {
             new Date(this.form.value.dateFrom),
             new Date(this.form.value.dateTo),
             this.form.value.location,
-            this.form.value.imageUrl,
+            this.setImageUrl(this.form.value.imageUrl),
           ).subscribe(() => {
             loadingEl.dismiss();
             this.router.navigateByUrl('/places/tabs/offers');
           });
         });
     }
+  }
+
+  private setImageUrl(imageUrl: string) {
+    return (imageUrl === '')? 
+    'https://mrconfeccoes.com.br/wp-content/uploads/2018/03/default.jpg' : imageUrl
   }
 
   private showErrorAlert() {

@@ -1,6 +1,6 @@
 import { map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { AuthResponse } from './auth.model';
 import { BehaviorSubject, Observable, from } from 'rxjs';
@@ -10,10 +10,11 @@ import { Preferences } from '@capacitor/preferences';
 @Injectable({
   providedIn: 'root'
 })
-export class AuthService {
+export class AuthService implements OnDestroy {
 
   private FIREBASE_AUTH_URL = 'https://identitytoolkit.googleapis.com/v1/accounts';
   private _user = new BehaviorSubject<User | null>(null);
+  private activeLogoutTimer: any;
 
   get userId(): Observable<string | null> {
     return this._user!.asObservable()
@@ -27,6 +28,13 @@ export class AuthService {
       .pipe(
         map((user) => !!user?.token ?? false)
       );
+  }
+
+  get token() {
+    return this._user!.asObservable()
+    .pipe(
+      map((user) => user?.token ?? null)
+    );
   }
 
   constructor(
@@ -52,7 +60,9 @@ export class AuthService {
   }
 
   logout() {
+    this.preventTimeoutMemoryLeaks();
     this._user.next(null);
+    Preferences.remove({ key: 'authData' })
   }
 
   autoLogin(): Observable<boolean> {
@@ -64,17 +74,25 @@ export class AuthService {
           if (expirationTime >= new Date()) {
             return new User(storeData.id, storeData.email, storeData._token, expirationTime);
           }
-          
+
         }
         return null;
       }),
         tap((user) => {
           if (user) {
             this._user.next(user);
+            this.scheduleAutoLogout(user.tokenDuration);
           }
         }),
         map((user) => !!user)
       );
+  }
+
+  scheduleAutoLogout(duration: number) {
+    this.preventTimeoutMemoryLeaks();
+    this.activeLogoutTimer = setTimeout(() => {
+      this.logout();
+    }, duration);
   }
 
   private setUser(userResponse: AuthResponse): void {
@@ -86,11 +104,22 @@ export class AuthService {
       expirationTime
     );
     this._user.next(user)
+    this.scheduleAutoLogout(user.tokenDuration);
     this.storeAuthData(user);
   }
 
   private storeAuthData(user: User) {
     const authData = JSON.stringify({ ...user, tokenExpirationDate: user.tokenExpirationDate.toISOString() })
     Preferences.set({ key: 'authData', value: authData })
+  }
+
+  private preventTimeoutMemoryLeaks() {
+    if (this.activeLogoutTimer) {
+      clearTimeout(this.activeLogoutTimer);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.preventTimeoutMemoryLeaks();
   }
 }

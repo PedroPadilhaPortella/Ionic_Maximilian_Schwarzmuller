@@ -4,7 +4,7 @@ import { ActionSheetController, AlertController, LoadingController, ModalControl
 import { PlacesService } from '../../places.service';
 import { Place } from '../../place.model';
 import { CreateBookingModalComponent } from 'src/app/bookings/create-booking-modal/create-booking-modal.component';
-import { Subscription, map, switchMap } from 'rxjs';
+import { Subscription, map, switchMap, take } from 'rxjs';
 import { BookingService } from 'src/app/bookings/booking.service';
 import { AuthService } from 'src/app/auth/auth.service';
 
@@ -40,31 +40,33 @@ export class PlaceDetailPage implements OnInit {
     let userIdFetched: string;
 
     this.authService.userId
-      .pipe(switchMap((userId) => {
-        if (userId) {
-          userIdFetched = userId
-          return this.activatedRoute.paramMap
-            .pipe(switchMap((paramMap) => {
-              const placeId = paramMap.get('placeId')!;
+      .pipe(
+        take(1),
+        switchMap((userId) => {
+          if (userId) {
+            userIdFetched = userId
+            return this.activatedRoute.paramMap
+              .pipe(switchMap((paramMap) => {
+                const placeId = paramMap.get('placeId')!;
 
-              return this.placesService.getPlace(placeId)
-                .pipe(map((place) => {
-                  this.place = place!;
-                  if (!paramMap.has('placeId') || this.place == null) {
-                    this.navController.navigateBack('/places/tabs/discover');
-                  }
-                }))
-            }))
-        } else {
-          throw new Error('No user Id found.');
-        }
-      })).subscribe({
-        next: () => {
-          this.isBookable = this.place.userId !== userIdFetched
-          this.isLoading = false;
-        },
-        error: () => this.showErrorAlert()
-      })
+                return this.placesService.getPlace(placeId)
+                  .pipe(map((place) => {
+                    this.place = place!;
+                    if (!paramMap.has('placeId') || this.place == null) {
+                      this.navController.navigateBack('/places/tabs/discover');
+                    }
+                  }))
+              }))
+          } else {
+            throw new Error('No user Id found.');
+          }
+        })).subscribe({
+          next: () => {
+            this.isBookable = this.place.userId !== userIdFetched
+            this.isLoading = false;
+          },
+          error: () => this.showErrorAlert()
+        })
   }
 
   onBookPlace() {
